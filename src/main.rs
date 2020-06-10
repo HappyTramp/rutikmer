@@ -1,8 +1,9 @@
-use std::time::SystemTime;
 use sdl2::ttf;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
+
+pub mod time;
 
 fn main() {
     let sdl = sdl2::init().unwrap();
@@ -15,36 +16,43 @@ fn main() {
         .build()
         .unwrap();
 
-    let mut timming = false;
-    let mut time_start = SystemTime::now();
+    let mut timer = time::Timer::new();
 
     let mut canvas = window.into_canvas().build().unwrap();
     let texture_creator = canvas.texture_creator();
-
     let mut event_pump = sdl.event_pump().unwrap();
+
     'running: loop {
         for e in event_pump.poll_iter() {
             match e {
-                Event::Quit {..} | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => break 'running,
+                Event::Quit {..} => break 'running,
                 Event::KeyDown { keycode: Some(Keycode::Space), .. } => {
-                    timming = !timming;
-                    if timming {
-                        time_start = SystemTime::now();
+                    match timer.state {
+                        time::State::Active   => timer.stop(),
+                        time::State::Inactive => timer.idle(),
+                        time::State::Idle     => {},
+                    }
+                }
+                Event::KeyUp   { keycode: Some(Keycode::Space), .. } => {
+                    if timer.state == time::State::Idle {
+                        timer.start();
                     }
                 },
                 _ => {}
             }
         }
-
-        canvas.set_draw_color(if !timming { Color::RGB(0, 0, 0) } else { Color::RGB(30, 150, 30) });
-        canvas.clear();
-        if timming {
-            let surface = font.render(&time_start.elapsed().unwrap().as_millis().to_string())
-                              .solid(Color::RGB(255, 255, 255))
-                              .unwrap();
-            let tex = texture_creator.create_texture_from_surface(&surface).unwrap();
-            canvas.copy(&tex, None, None).unwrap();
+        match timer.state {
+            time::State::Idle     => canvas.set_draw_color(Color::RGB(100, 100, 0)),
+            time::State::Active   => canvas.set_draw_color(Color::RGB(0, 100, 0)),
+            time::State::Inactive => canvas.set_draw_color(Color::RGB(0, 0, 0)),
         }
+        canvas.clear();
+
+        if timer.state != time::State::Idle {
+            canvas.copy(&timer.to_texture(&font, &texture_creator), None, None).unwrap();
+        }
+
         canvas.present();
+        std::thread::sleep(std::time::Duration::new(0, 3_000_000));
     }
 }
