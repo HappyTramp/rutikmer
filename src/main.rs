@@ -5,12 +5,21 @@ use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 
 pub mod time;
-pub mod shuffle;
+pub mod scramble;
 pub mod text;
+pub mod history;
+
+use scramble::Scramble;
+use history::History;
 
 const WIDTH:  u32  = 640;
 const HEIGHT: u32  = 480;
 const TITLE:  &str = "rutikmer";
+const FONT_SIZE: u32 = 40;
+
+const GREEN:  Color = Color::RGB(0x1B, 0x5E, 0x20);
+const ORANGE: Color = Color::RGB(0xEF, 0x6C, 0x00);
+const BLACK:  Color = Color::RGB(0x00, 0x00, 0x00);
 
 fn main() {
     let sdl = sdl2::init().unwrap();
@@ -21,7 +30,8 @@ fn main() {
         .resizable()
         .build()
         .unwrap();
-    let font = ttf.load_font("font/FiraMono-Regular.ttf", 40).unwrap();
+    let font = ttf.load_font("font/FiraMono-Regular.ttf", FONT_SIZE as u16).unwrap();
+    let hist = History::from_csv("history.csv");
 
     let mut canvas = window.into_canvas().build().unwrap();
     let mut event_pump = sdl.event_pump().unwrap();
@@ -29,9 +39,9 @@ fn main() {
 
     let mut timer = time::Timer::new();
     let timer_rect = Rect::new(10, 10, 100, 40);
-    let mut text_factory = text::Factory::new(&font, &tex_creator, Color::RGB(0, 0, 0));
+    let mut text_factory = text::Factory::new(&font, &tex_creator, BLACK, FONT_SIZE);
 
-    let mut shuffle_str = shuffle::Move::string_sequence(10);
+    let mut scramble_str = Scramble::new_rand(10).to_string();
 
     'running: loop {
         for e in event_pump.poll_iter() {
@@ -43,7 +53,7 @@ fn main() {
                         time::State::Active   => timer.stop(),
                         time::State::Inactive => {
                             timer.idle();
-                            shuffle_str = shuffle::Move::string_sequence(10);
+                            scramble_str = Scramble::new_rand(10).to_string();
                         },
                     }
                 }
@@ -59,9 +69,9 @@ fn main() {
             }
         }
         let bg_color = match timer.state {
-            time::State::Idle     => Color::RGB(100, 100, 0),
-            time::State::Active   => Color::RGB(0, 100, 0),
-            time::State::Inactive => Color::RGB(0, 0, 0),
+            time::State::Idle     => ORANGE,
+            time::State::Active   => GREEN,
+            time::State::Inactive => BLACK,
         };
         canvas.set_draw_color(bg_color);
         text_factory.set_bg(bg_color);
@@ -72,7 +82,11 @@ fn main() {
         }
 
         if timer.state == time::State::Inactive {
-            canvas.copy(&text_factory.from_string(&shuffle_str), None, Rect::new(10, 100, 500, 40)).unwrap();
+            canvas.copy(&text_factory.from_string(&scramble_str), None, Rect::new(10, 100, 500, 40)).unwrap();
+            let sum = hist.summary(3);
+            for (i, s) in sum.iter().enumerate() {
+                canvas.copy(&text_factory.from_string(&s), None, Rect::new(10, 200 + 40 * (i as i32), 200, 30)).unwrap();
+            }
         }
 
         canvas.present();
