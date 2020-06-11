@@ -3,7 +3,6 @@ use sdl2::event::{Event};
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
-use sdl2::render::{Texture, TextureCreator};
 
 pub mod time;
 pub mod shuffle;
@@ -29,9 +28,10 @@ fn main() {
     let tex_creator = canvas.texture_creator();
 
     let mut timer = time::Timer::new();
-    // let mut ui = ui::UI::new(WIDTH, HEIGHT);
-    //
     let timer_rect = Rect::new(10, 10, 100, 40);
+    let mut text_factory = text::Factory::new(&font, &tex_creator, Color::RGB(0, 0, 0));
+
+    let mut shuffle_str = shuffle::Move::string_sequence(10);
 
     'running: loop {
         for e in event_pump.poll_iter() {
@@ -39,9 +39,12 @@ fn main() {
                 Event::Quit {..} => break 'running,
                 Event::KeyDown { keycode: Some(Keycode::Space), repeat: false, .. } => {
                     match timer.state {
-                        time::State::Active   => timer.stop(),
-                        time::State::Inactive => timer.idle(),
                         time::State::Idle     => {},
+                        time::State::Active   => timer.stop(),
+                        time::State::Inactive => {
+                            timer.idle();
+                            shuffle_str = shuffle::Move::string_sequence(10);
+                        },
                     }
                 }
                 Event::KeyUp { keycode: Some(Keycode::Space), repeat: false, .. } => {
@@ -61,21 +64,18 @@ fn main() {
             time::State::Inactive => Color::RGB(0, 0, 0),
         };
         canvas.set_draw_color(bg_color);
+        text_factory.set_bg(bg_color);
         canvas.clear();
 
         if timer.state != time::State::Idle {
-            canvas.copy(&timer.to_texture(&font, &tex_creator, &bg_color),
-                        None,
-                        timer_rect)
-                .unwrap();
+            canvas.copy(&text_factory.from_string(&timer.to_string()), None, timer_rect).unwrap();
         }
 
-        let s = shuffle::Move::string_sequence(10);
-        let shuff_tex = text::to_texture(&s, &font, &tex_creator, &bg_color);
-        canvas.copy(&shuff_tex, None, Rect::new(10, 100, 500, 40)).unwrap();
-
+        if timer.state == time::State::Inactive {
+            canvas.copy(&text_factory.from_string(&shuffle_str), None, Rect::new(10, 100, 500, 40)).unwrap();
+        }
 
         canvas.present();
-        std::thread::sleep(std::time::Duration::new(0, 3_000_000));
+        std::thread::sleep(std::time::Duration::new(0, 30_000_000));
     }
 }

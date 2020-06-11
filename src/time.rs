@@ -1,7 +1,4 @@
 use std::time::{SystemTime, Duration};
-use sdl2::ttf;
-use sdl2::render::{Texture, TextureCreator};
-use sdl2::pixels::Color;
 
 #[derive(PartialEq)]
 pub enum State {
@@ -38,23 +35,18 @@ impl Timer {
     pub fn idle(&mut self) {
         self.state = State::Idle;
     }
+}
 
-    pub fn to_texture<'a, T>(
-        &'a self,
-        font: &ttf::Font,
-        tex_creator: &'a TextureCreator<T>,
-        bg: &Color
-    ) -> Texture
-    {
+use std::fmt;
+
+impl fmt::Display for Timer {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let current = if self.state == State::Active {
             self.time.elapsed().unwrap()
         } else {
             self.result
         }.as_millis();
 
-        let s = format!("{}.{}", current / 1000, current % 1000);
-
-        let surface = font.render(&s).shaded(Color::RGB(255, 255, 255), *bg).unwrap();
-        tex_creator.create_texture_from_surface(&surface).unwrap()
+        write!(f, "{}.{}", current / 1000, current % 1000)
     }
 }
