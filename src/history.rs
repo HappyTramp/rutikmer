@@ -6,7 +6,7 @@
 /*   By: charles <charles.cabergs@gmail.com>               /o  o \            */
 /*                                                        /  v    \           */
 /*   Created: 2020/06/25 13:24:10 by charles             /    _    \          */
-/*   Updated: 2020/06/25 13:24:12 by charles            '-----------'         */
+/*   Updated: 2020/06/25 15:29:21 by charles            '-----------'         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@ use chrono;
 use chrono::prelude::*;
 
 use super::scramble::Scramble;
+use super::time::Timer;
 
 
 pub struct SolveTime(Duration);
@@ -50,17 +51,23 @@ struct Entry {
     date: chrono::DateTime<Utc>,
 }
 
-pub struct History(Vec<Entry>);
+pub struct History {
+    entries: Vec<Entry>,
+    deleted: Vec<Entry>,
+}
 
 const VEC_START_SIZE: usize = 200;
 
 impl History {
     pub fn from_csv(file_path: &str) -> History {
-        let mut history = History(Vec::with_capacity(VEC_START_SIZE));
+        let mut history = History {
+            entries: Vec::with_capacity(VEC_START_SIZE),
+            deleted: Vec::new()
+        };
         let mut reader = csv::Reader::from_path(file_path).unwrap();
         for result in reader.records() {
             if let Ok(record) = result {
-                history.0.push(Entry{
+                history.entries.push(Entry{
                     time:     record[0].parse::<SolveTime>().unwrap(),
                     scramble: record[1].parse::<Scramble>().unwrap(),
                     date:     record[2].parse::<chrono::DateTime<Utc>>().unwrap()
@@ -73,7 +80,7 @@ impl History {
     pub fn save_csv(&self, file_path: &str) {
         let mut writter = csv::Writer::from_path(file_path).unwrap();
         writter.write_record(&["time", "scramble", "date"]).unwrap();
-        for entry in &self.0 {
+        for entry in &self.entries {
             writter.write_record(&[
                 entry.time.to_string(),
                 entry.scramble.to_string(),
@@ -84,6 +91,26 @@ impl History {
     }
 
     pub fn summarize(&self, n: usize) -> Vec<String> {
-        self.0.iter().skip(self.0.len() - n).map(|Entry{time, ..}| time.to_string()).collect()
+        self.entries.iter().skip(self.entries.len() - n).map(|Entry{time, ..}| time.to_string()).collect()
+    }
+
+    pub fn pop(&mut self) {
+        if let Some(e) = self.entries.pop() {
+            self.deleted.push(e);
+        }
+    }
+
+    pub fn undo_pop(&mut self) {
+        if let Some(e) = self.deleted.pop() {
+            self.entries.push(e);
+        }
+    }
+
+    pub fn push(&mut self, timer: &Timer, scramble: &Scramble) {
+        self.entries.push(Entry {
+            time: SolveTime(timer.result),
+            scramble: scramble.clone(),
+            date: chrono::offset::Utc::now(),
+        });
     }
 }

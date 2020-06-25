@@ -6,7 +6,7 @@
 /*   By: charles <charles.cabergs@gmail.com>               /o  o \            */
 /*                                                        /  v    \           */
 /*   Created: 2020/06/25 13:24:17 by charles             /    _    \          */
-/*   Updated: 2020/06/25 13:24:18 by charles            '-----------'         */
+/*   Updated: 2020/06/25 15:29:01 by charles            '-----------'         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@ use rand::{
     Rng
 };
 
+#[derive(Clone)]
 pub struct Scramble(Vec<Move>);
 
 impl Scramble {
@@ -57,6 +58,13 @@ impl str::FromStr for Scramble {
     }
 }
 
+// impl Clone for Scramble {
+//     fn clone(&self) -> Scramble {
+//         let v = self.0;
+//         Scramble(v)
+//     }
+// }
+
 impl str::FromStr for Move {
     type Err = &'static str;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -87,11 +95,13 @@ impl str::FromStr for Move {
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 enum Direction { Front, Back, Down, Up, Right, Left, }
 
+#[derive(Clone)]
 enum Modifier  { No, Twice, Prime, }
 
+#[derive(Clone)]
 struct Move {
     direction: Direction,
     modifier: Modifier,

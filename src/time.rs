@@ -6,7 +6,7 @@
 /*   By: charles <charles.cabergs@gmail.com>               /o  o \            */
 /*                                                        /  v    \           */
 /*   Created: 2020/06/25 13:24:24 by charles             /    _    \          */
-/*   Updated: 2020/06/25 13:24:24 by charles            '-----------'         */
+/*   Updated: 2020/06/25 15:23:01 by charles            '-----------'         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@ pub enum State {
 pub struct Timer {
     pub state: State,
     time: SystemTime,
-    result: Duration,
+    pub result: Duration,
 }
 
 impl Timer {
