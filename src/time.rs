@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                            .               */
+/*   time.rs                                                 / \              */
+/*                                                          /   \             */
+/*   By: charles <charles.cabergs@gmail.com>               /o  o \            */
+/*                                                        /  v    \           */
+/*   Created: 2020/06/25 13:24:24 by charles             /    _    \          */
+/*   Updated: 2020/06/25 13:24:24 by charles            '-----------'         */
+/*                                                                            */
+/* ************************************************************************** */
+
 use std::time::{SystemTime, Duration};
 
 #[derive(PartialEq)]
@@ -47,6 +59,6 @@ impl fmt::Display for Timer {
             self.result
         }.as_millis();
 
-        write!(f, "{}.{}", current / 1000, current % 1000)
+        write!(f, "{:0>2}.{:0>3}", current / 1000, current % 1000)
     }
 }

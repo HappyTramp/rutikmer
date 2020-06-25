@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                            .               */
+/*   history.rs                                              / \              */
+/*                                                          /   \             */
+/*   By: charles <charles.cabergs@gmail.com>               /o  o \            */
+/*                                                        /  v    \           */
+/*   Created: 2020/06/25 13:24:10 by charles             /    _    \          */
+/*   Updated: 2020/06/25 13:24:12 by charles            '-----------'         */
+/*                                                                            */
+/* ************************************************************************** */
+
 use std::time::Duration;
 use std::str;
 use std::num;
@@ -71,7 +83,7 @@ impl History {
         writter.flush().unwrap();
     }
 
-    pub fn summary(&self, n: usize) -> Vec<String> {
+    pub fn summarize(&self, n: usize) -> Vec<String> {
         self.0.iter().skip(self.0.len() - n).map(|Entry{time, ..}| time.to_string()).collect()
     }
 }
